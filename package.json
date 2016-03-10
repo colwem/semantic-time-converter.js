@@ -1,6 +1,6 @@
 {
   "name": "semantic-time-converter.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Convert to and from time durations in plain english",
   "main": "index.js",
   "scripts": {
