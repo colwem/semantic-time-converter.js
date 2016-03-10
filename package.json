@@ -1,0 +1,15 @@
+{
+  "name": "easy-time.js",
+  "version": "1.0.0",
+  "description": "Time calculations in plain english",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --recursive test"
+  },
+  "author": "Martin Colwell",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^3.5.0",
+    "harmony-reflect": "^1.4.2"
+  }
+}
