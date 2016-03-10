@@ -2,10 +2,7 @@
 
 let _ = require('lodash');
 
-// et(3).weeks.in.years();
-// et(3).weeks.less(2).days().in.seconds();
-
-let yearDays = 365.25
+let yearDays = 365.25;
 
 class TimeConverter {
   constructor(acc, number) {
@@ -26,11 +23,13 @@ class TimeConverter {
     let durations = Object.keys(this.inMilliseconds);
     _.each(durations, (duration) => {
       let newAcc = this.inMilliseconds[duration] * number + acc;
+      this[duration] = {};
       this[duration].and = and(newAcc);
       this[duration].less = less(newAcc);
-      this[duration].in = _.reduce(durations, (o, inDuration) => {
+      this[duration].in = _.reduce(durations, (o, d) => {
         o[d] = newAcc / this.inMilliseconds[d];
-      });
+        return o;
+      }, {});
     });
   }
 
@@ -40,13 +39,13 @@ class TimeConverter {
 }
 
 
-and = _.curry((acc, number) => {
+let and = _.curry((acc, number) => {
   return new TimeConverter(acc, number)
-}
+});
 
 
-less = _.curry((acc, number) => {
+let less = _.curry((acc, number) => {
   return new TimeConverter(acc, -number)
-}
+});
 
 module.exports = TimeConverter;

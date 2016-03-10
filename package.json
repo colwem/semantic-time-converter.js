@@ -1,7 +1,7 @@
 {
-  "name": "easy-time.js",
+  "name": "semantic-time-converter.js",
   "version": "1.0.0",
-  "description": "Time calculations in plain english",
+  "description": "Convert to and from time durations in plain english",
   "main": "index.js",
   "scripts": {
     "test": "mocha --recursive test"
@@ -9,7 +9,9 @@
   "author": "Martin Colwell",
   "license": "ISC",
   "dependencies": {
-    "chai": "^3.5.0",
-    "harmony-reflect": "^1.4.2"
+    "lodash": "^4.6.1"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0"
   }
 }
