@@ -1,11 +1,11 @@
 'use strict';
 
-let _ = require('lodash');
+const _ = require('lodash');
 
-let yearDays = 365.25;
+const yearDays = 365.25;
 
 // ms is short for milliseconds
-let inMs = {
+const inMs = {
   "milliseconds": 1,
   "seconds":      1000,
   "minutes":      1000 * 60,
@@ -19,29 +19,26 @@ let inMs = {
   "milleniums":   1000 * 60 * 60 * 24 * yearDays * 1000};
 
 
-let TimeConverter = function TimeConverter(msAccumulator, ambiguousNumber) {
+const TimeConverter = function TimeConverter(msAccumulator, ambiguousNumber) {
   this.msAccumulator =  msAccumulator;
   this.ambiguousNumber = ambiguousNumber;
-  let durations = Object.keys(inMs);
+  const durations = Object.keys(inMs);
 
+  // bind 'this' to the curried building function
+  const bound = _.bind(buildDuration(inMs, durations), this);
 
   // creat object keyed by each possible duration with the value being the duration
-  // object built with this._buildDuration
-  let durationsObj =
-    _.zipObject(
-      durations,
-      _.map(
-        durations,
-        _.bind(buildDuration(inMs, durations), this)));
+  // object built with the bound function
+  const durationsObj = mapToObject(durations, bound)
 
   _.assign(this, durationsObj);
 }
 
-let buildDuration = _.curry(function (inMs, durations, thisDuration) {
-  let newMsAccumulator =
+const buildDuration = _.curry(function (inMs, durations, thisDuration) {
+  const newMsAccumulator =
     inMs[thisDuration] * this.ambiguousNumber + this.msAccumulator;
 
-  let durationObj = {};
+  const durationObj = {};
 
   // chain on an addition
   // convert([ambiguousNumber]).[duration].and([newAmbiguousNumber])
@@ -55,10 +52,10 @@ let buildDuration = _.curry(function (inMs, durations, thisDuration) {
 
   // Calculate and attach all the possible convertions for this object
   // convert([ambiguousNumber]).[duration].to.[otherDuration]
-  durationObj.to = _.zipObject(durations, _.map(durations, (duration) => {
+  durationObj.to = mapToObject(durations, (duration) => {
 
     return newMsAccumulator / inMs[duration];
-  }));
+  });
 
   // for the gimme...in form
   // gimme([ambiguousNumber]).[duration].in([newAmbiguousNumber])
@@ -68,16 +65,27 @@ let buildDuration = _.curry(function (inMs, durations, thisDuration) {
 });
 
 
-let and = _.curry((acc, number) => {
+// Takes an array and function and returns an object keyed by the elements
+// from the array with the values being the result of applying the function
+// to the that element of the array.
+const mapToObject = function(arr, fn) {
+   return _.zipObject(arr, _.map(arr, fn));
+}
+
+// Creates a new TimeConverter with an initial value in milliseconds and
+// an ambigous value. function is curried so it can be partially applied
+//
+const and = _.curry((acc, number) => {
   return new TimeConverter(acc, number)
 });
 
 
-let less = _.curry((acc, number) => {
+// Same as and just subtracts the ambiguous number rather than adds it.
+const less = _.curry((acc, number) => {
   return new TimeConverter(acc, -number)
 });
 
-let toExport = and(0);
+const toExport = and(0);
 
 toExport.TimeConverter = TimeConverter;
 
