@@ -1,16 +1,17 @@
 'use strict';
 
 let expect        = require('chai').expect,
-    TimeConverter = require('../index.js'),
-    whats = TimeConverter.starter();
+    whats         = require('../index.js'),
+    TimeConverter = whats.TimeConverter;
 
-describe('invokation', function() {
+describe('invocation', function() {
   it('returns TimeConverter object', function() {
     expect(whats(3)).to.be.an.instanceOf(TimeConverter)
   });
 
   it('has properties', function() {
     let c = whats(3);
+
     expect(c.seconds).to.exist;
     expect(c.minutes).to.exist;
     expect(c.weeks).to.exist;
