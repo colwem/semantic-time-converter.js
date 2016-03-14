@@ -19,19 +19,22 @@ const inMs = {
   "milleniums":   1000 * 60 * 60 * 24 * yearDays * 1000};
 
 
-const TimeConverter = function TimeConverter(msAccumulator, ambiguousNumber) {
-  this.msAccumulator =  msAccumulator;
-  this.ambiguousNumber = ambiguousNumber;
+function createTimeConverter (msAccumulator, ambiguousNumber) {
+  const obj =  {
+    msAccumulator:  msAccumulator,
+    ambiguousNumber: ambiguousNumber,
+  }
+
   const durations = Object.keys(inMs);
 
   // bind 'this' to the curried building function
-  const bound = _.bind(buildDuration(inMs, durations), this);
+  const bound = _.bind(buildDuration(inMs, durations), obj);
 
   // creat object keyed by each possible duration with the value being the duration
   // object built with the bound function
   const durationsObj = mapToObject(durations, bound)
 
-  _.assign(this, durationsObj);
+  return _.assign(obj, durationsObj);
 }
 
 const buildDuration = _.curry(function (inMs, durations, thisDuration) {
@@ -53,7 +56,6 @@ const buildDuration = _.curry(function (inMs, durations, thisDuration) {
   // Calculate and attach all the possible convertions for this object
   // convert([ambiguousNumber]).[duration].to.[otherDuration]
   durationObj.to = mapToObject(durations, (duration) => {
-
     return newMsAccumulator / inMs[duration];
   });
 
@@ -76,17 +78,15 @@ const mapToObject = function(arr, fn) {
 // an ambigous value. function is curried so it can be partially applied
 //
 const and = _.curry((acc, number) => {
-  return new TimeConverter(acc, number)
+  return createTimeConverter(acc, number)
 });
 
 
 // Same as and just subtracts the ambiguous number rather than adds it.
 const less = _.curry((acc, number) => {
-  return new TimeConverter(acc, -number)
+  return createTimeConverter(acc, -number)
 });
 
-const toExport = and(0);
+const startAtZero = and(0);
 
-toExport.TimeConverter = TimeConverter;
-
-module.exports = toExport;
+module.exports = startAtZero;

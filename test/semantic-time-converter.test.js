@@ -5,10 +5,6 @@ let expect        = require('chai').expect,
     TimeConverter = whats.TimeConverter;
 
 describe('invocation', function() {
-  it('returns TimeConverter object', function() {
-    expect(whats(3)).to.be.an.instanceOf(TimeConverter)
-  });
-
   it('has properties', function() {
     let c = whats(3);
 
@@ -30,6 +26,13 @@ describe('conversion', function() {
 describe('#and', function() {
   it('adds durations', function() {
     expect(whats(1).minutes.and(30).seconds.in.seconds).to.equal(90);
+  });
+});
+
+describe('#plus', function() {
+  it('should be the same as and', function() {
+    expect(whats(1).minutes.and(30).seconds.in.seconds)
+    .to.equal(whats(1).minutes.plus(30).seconds.in.seconds);
   });
 });
 
