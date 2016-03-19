@@ -19,53 +19,83 @@ const inMs = {
   "milleniums":   1000 * 60 * 60 * 24 * yearDays * 1000};
 
 
-function createTimeConverter (msAccumulator, ambiguousNumber) {
-  const obj =  {
-    msAccumulator:  msAccumulator,
-    ambiguousNumber: ambiguousNumber,
-  }
+const createAmbiguated = getCreateAmbiguated(inMs);
+const createDisambiguated = getCreateDisambiguated(inMs);
+const createConverter = getCreateConverter(inMs);
 
-  const durations = Object.keys(inMs);
+// so we have 2 types of objects, ambiguous and disambiguated
+// ambiguous will have properties of units
+// each unit will be a disambiguated object
+// it has the incoming milliseconds and adds to that the
+// disambiguated value.
+// it has properties in, to, and, plus, less, minus
+// in and to are a conversion object.
+// conversion object has properties for each possible conversion
 
-  // bind 'this' to the curried building function
-  const bound = _.bind(buildDuration(inMs, durations), obj);
-
-  // creat object keyed by each possible duration with the value being the duration
-  // object built with the bound function
-  const durationsObj = mapToObject(durations, bound)
-
-  return _.assign(obj, durationsObj);
+function getDurations(inMs) {
+  return Object.keys(inMs);
 }
 
-const buildDuration = _.curry(function (inMs, durations, thisDuration) {
-  const newMsAccumulator =
-    inMs[thisDuration] * this.ambiguousNumber + this.msAccumulator;
+function getCreateAmbiguated(inMs) {
+  const durations = getDurations(inMs);
 
-  const durationObj = {};
+  return function(currentMs, number) {
+    const ambiguous = {
+      number,
+      currentMs
+    };
 
-  // chain on an addition
-  // convert([ambiguousNumber]).[duration].and([newAmbiguousNumber])
-  durationObj.and = and(newMsAccumulator);
-  durationObj.plus = durationObj.and;
+    for (let duration of durations) {
+      Object.defineProperty(ambiguous, duration, {
+        get: function() {
+          return createDisambiguated(ambiguous, duration);
+        }
+      });
+    }
 
-  // chain on a subration
-  // convert([ambiguousNumber]).[duration].less([newAmbiguousNumber])
-  durationObj.less = less(newMsAccumulator);
-  durationObj.minus = durationObj.less;
+    makeSingularAliases(ambiguous, durations);
+    return ambiguous;
+  };
+}
 
-  // Calculate and attach all the possible convertions for this object
-  // convert([ambiguousNumber]).[duration].to.[otherDuration]
-  durationObj.to = mapToObject(durations, (duration) => {
-    return newMsAccumulator / inMs[duration];
-  });
+function getCreateDisambiguated(inMs) {
+  return function(ambiguous, duration) {
+    const disambiguated = {
+      currentMs:
+          inMs[duration] * ambiguous.number + ambiguous.currentMs
+    }
+    disambiguated.to = createConverter(disambiguated);
+    disambiguated.in = disambiguated.to
 
-  // for the gimme...in form
-  // gimme([ambiguousNumber]).[duration].in([newAmbiguousNumber])
-  durationObj.in = durationObj.to;
+    disambiguated.and = createAmbiguated.bind(null, disambiguated.currentMs);
+    disambiguated.plus = disambiguated.and;
 
-  return durationObj
-});
+    disambiguated.less = function(number) {
+      return createAmbiguated(disambiguated.currentMs, -number);
+    };
+    disambiguated.minus = disambiguated.less;
 
+    return disambiguated;
+  }
+}
+
+function getCreateConverter(inMs) {
+  const durations = getDurations(inMs);
+  return function(disambiguated) {
+    const converter = {
+      disambiguated
+    }
+
+    for(let duration of durations) {
+      Object.defineProperty(converter, duration, {
+        get: function () {
+          return disambiguated.currentMs / inMs[duration];
+        }
+      });
+    }
+    return converter;
+  }
+}
 
 // Takes an array and function and returns an object keyed by the elements
 // from the array with the values being the result of applying the function
@@ -74,19 +104,29 @@ const mapToObject = function(arr, fn) {
    return _.zipObject(arr, _.map(arr, fn));
 }
 
-// Creates a new TimeConverter with an initial value in milliseconds and
-// an ambigous value. function is curried so it can be partially applied
-//
-const and = _.curry((acc, number) => {
-  return createTimeConverter(acc, number)
-});
+// The next 4 functions are for making singular versions of the plural named
+// duration properties
+function singularize(plural) {
+  return plural.replace(/s$/, '');
+}
+
+function pairWith(list, fn) {
+  return list.map((e) => {
+    return [e, fn(e)];
+  });
+}
+
+function aliasProperties(obj, aliasPairs) {
+  for(let pair of aliasPairs) {
+    obj[pair[1]] = obj[pair[0]];
+  }
+}
+
+function makeSingularAliases(obj, propertyList) {
+  aliasProperties(obj, pairWith(propertyList, singularize));
+}
 
 
-// Same as and just subtracts the ambiguous number rather than adds it.
-const less = _.curry((acc, number) => {
-  return createTimeConverter(acc, -number)
-});
-
-const startAtZero = and(0);
+const startAtZero = createAmbiguated.bind(null, 0);
 
 module.exports = startAtZero;
